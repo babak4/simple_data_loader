@@ -1,16 +1,15 @@
 import os
 from datetime import date, datetime
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import task
 
 from app.db_utils import db_factory
 
 SAMPLE_DATE = date(2023, 1, 1)
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-TEST_DATA_LOCATION = f'{ROOT_DIR}/data'
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+TEST_DATA_LOCATION = f'{CURRENT_DIR}/data'
 
-db = db_factory.DBFactory().get_db('DuckDB', 'test_dwh.db')
 date_hour = datetime.combine(SAMPLE_DATE, datetime.min.time()).replace(hour=0)
 
 
@@ -24,7 +23,12 @@ def test_num_of_event_views_per_hour_success_correct_calls():
     )
 
 
+@patch('app.db_utils.db_factory.DB_PATH', CURRENT_DIR)
 def test_num_of_event_views_per_hour_success_correct_data():
+    global db
+    if os.path.exists(os.path.join(CURRENT_DIR, 'test_dwh.db')):
+        os.remove(os.path.join(CURRENT_DIR, 'test_dwh.db'))
+    db = db_factory.DBFactory().get_db('DuckDB', 'test_dwh.db')
     task.num_of_event_views_per_hour(
         date_hour=date_hour, data_path=TEST_DATA_LOCATION, db=db
     )
